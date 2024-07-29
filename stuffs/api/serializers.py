@@ -41,15 +41,15 @@ class UserModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'get_full_name', 'email', 'is_staff', 'profile']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'profile']
 
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     # Add custom fields or modify existing ones here
-    #     representation['full_name'] = f"{instance.first_name} {instance.last_name}"
-    #     # You can also remove fields if needed
-    #     # representation.pop('username', None)
-    #     return representation
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Add custom fields or modify existing ones here
+        representation['full_name'] = f"{instance.first_name} {instance.last_name}"
+        # You can also remove fields if needed
+        # representation.pop('username', None)
+        return representation
 
 class CategoryModelSerializer(serializers.ModelSerializer):
     class Meta:
