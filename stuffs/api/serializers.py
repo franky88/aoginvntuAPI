@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from stuffs.models import Unit, Unitkit, Category, User, UnitStatus
+from stuffs.models import Unit, Unitkit, Category, User, UnitStatus, Profile, Department
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenVerifySerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 import uuid
@@ -24,10 +24,32 @@ class MyTokenVerifySerializer(TokenVerifySerializer):
 class MyTokenVerifyView(TokenVerifyView):
     serializer_class = MyTokenVerifySerializer
 
+class DepartmentModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = ['id', 'name']
+
+class ProfileModelSerializer(serializers.ModelSerializer):
+    department = DepartmentModelSerializer(read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['id', 'user', 'employee_id', 'contact', 'department']
+
 class UserModelSerializer(serializers.ModelSerializer):
+    profile = ProfileModelSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'get_full_name', 'email', 'is_staff']
+        fields = ['id', 'username', 'first_name', 'last_name', 'get_full_name', 'email', 'is_staff', 'profile']
+
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     # Add custom fields or modify existing ones here
+    #     representation['full_name'] = f"{instance.first_name} {instance.last_name}"
+    #     # You can also remove fields if needed
+    #     # representation.pop('username', None)
+    #     return representation
 
 class CategoryModelSerializer(serializers.ModelSerializer):
     class Meta:

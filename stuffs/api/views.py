@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
-from stuffs.models import User, Category, Unit, Unitkit, UnitStatus
-from stuffs.api.serializers import UserModelSerializer, UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer
+from stuffs.models import User, Category, Unit, Unitkit, UnitStatus, Department, Profile
+from stuffs.api.serializers import UserModelSerializer, UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, ProfileModelSerializer
 from rest_framework.decorators import api_view
 
 @api_view(['GET'])
@@ -34,3 +34,11 @@ class UnitViewset(viewsets.ModelViewSet):
 class UnitkitViewset(viewsets.ModelViewSet):
     queryset = Unitkit.objects.all()
     serializer_class = UnitKitModelSerializer
+
+class DepartmentViewset(viewsets.ModelViewSet):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentModelSerializer
+
+class ProfileViewset(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileModelSerializer

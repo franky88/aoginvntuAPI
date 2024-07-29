@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from stuffs.api.views import UserViewset, UnitViewset, CategoryViewset, UnitkitViewset, UnitStatusViewset, getRoutes
+from stuffs.api.views import UserViewset, UnitViewset, CategoryViewset, UnitkitViewset, UnitStatusViewset, getRoutes, DepartmentViewset, ProfileViewset
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -13,6 +13,8 @@ router.register(r'units', UnitViewset)
 router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)
 router.register(r'unit-status', UnitStatusViewset)
+router.register(r'deparartment', DepartmentViewset)
+router.register(r'profile', ProfileViewset)
 
 urlpatterns = [
     path('', include(router.urls)),
