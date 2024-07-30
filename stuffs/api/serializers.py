@@ -45,10 +45,11 @@ class UserModelSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Add custom fields or modify existing ones here
         representation['full_name'] = f"{instance.first_name} {instance.last_name}"
-        # You can also remove fields if needed
-        # representation.pop('username', None)
+        if hasattr(instance, 'profile') and instance.profile:
+            representation['department'] = (instance.profile.department.name if instance.profile.department else None)
+        else:
+            representation['department'] = None
         return representation
 
 class CategoryModelSerializer(serializers.ModelSerializer):
