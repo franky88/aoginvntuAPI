@@ -30,7 +30,7 @@ class DepartmentModelSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class ProfileModelSerializer(serializers.ModelSerializer):
-    department = DepartmentModelSerializer(read_only=True)
+    # department = DepartmentModelSerializer(read_only=True)
 
     class Meta:
         model = Profile
