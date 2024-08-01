@@ -30,7 +30,6 @@ class DepartmentModelSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class ProfileModelSerializer(serializers.ModelSerializer):
-    # department = DepartmentModelSerializer(read_only=True)
 
     class Meta:
         model = Profile
@@ -46,10 +45,6 @@ class UserModelSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['full_name'] = f"{instance.first_name} {instance.last_name}"
-        if hasattr(instance, 'profile') and instance.profile:
-            representation['department'] = (instance.profile.department.name if instance.profile.department else None)
-        else:
-            representation['department'] = None
         return representation
 
 class CategoryModelSerializer(serializers.ModelSerializer):
