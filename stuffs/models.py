@@ -1,28 +1,17 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from simple_history.models import HistoricalRecords
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 import uuid
 import datetime
 
+User = get_user_model()
+
 # Create your models here.
-class Department(models.Model):
-    name = models.CharField(max_length=120)
-
-    def __str__(self):
-        return self.name.title()
-    
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    employee_id = models.CharField(max_length=20, unique=True)
-    contact = models.CharField(max_length=13, blank=True)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, blank=True, null=True)
-
-    def __str__(self):
-        return self.user.username.title()
 
 class Category(models.Model):
     name = models.CharField(max_length=102)

@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'simple_history',
     'corsheaders',
     'rest_framework_simplejwt',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -48,7 +49,7 @@ ROOT_URLCONF = 'AOGStuff.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'debug': True,
@@ -184,3 +185,5 @@ SIMPLE_JWT = {
 }
 
 APPEND_SLASH=True
+
+AUTH_USER_MODEL = 'users.User'
