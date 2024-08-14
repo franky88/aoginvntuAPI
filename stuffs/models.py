@@ -32,7 +32,7 @@ class UnitStatus(models.Model):
         return self.name
     
 class Unitkit(models.Model):
-    kit_code = models.CharField(max_length=13, unique=True)
+    kit_code = models.CharField(max_length=13, unique=True, null=True, blank=True)
     name = models.CharField(max_length=120)
     assign_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateField(auto_now_add=True)
@@ -46,12 +46,13 @@ class Unitkit(models.Model):
     
 class Unit(models.Model):
     create_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    barcode = models.CharField(max_length=60, unique=True, null=True, blank=True)
     name = models.CharField(max_length=120)
     model = models.CharField(max_length=60, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
     date_purchased = models.DateField()
     cost = models.FloatField()
-    serials = models.CharField(max_length=120, unique=True)
+    serial = models.CharField(max_length=120, unique=True)
     unit_kit = models.ForeignKey(Unitkit, on_delete=models.SET_NULL, null=True, blank=True)
     item_status = models.ForeignKey(UnitStatus, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateField(auto_now_add=True)
@@ -60,11 +61,17 @@ class Unit(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        return self.name.upper
+        return self.name.upper()
     
 
 @receiver(pre_save, sender=Unitkit)
 def unitkit_pre_save(sender, instance, *args, **kwargs):
-    if instance.kit_code == None:  # Generate kit_code if it's not set
+    if not instance.kit_code:
         kit_code = str(uuid.uuid4()).replace("-", "").upper()[:8]
         instance.kit_code = kit_code
+
+@receiver(pre_save, sender=Unit)
+def unit_pre_save(sender, instance, *args, **kwargs):
+    if not instance.barcode:
+        barcode = str(uuid.uuid4().int).replace("-", "").upper()[:13]
+        instance.barcode = barcode
