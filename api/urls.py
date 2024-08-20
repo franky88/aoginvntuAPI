@@ -14,7 +14,6 @@ router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)
 router.register(r'unit-status', UnitStatusViewset)
 router.register(r'department', DepartmentViewset)
-# router.register(r'profile', ProfileViewset)
 
 urlpatterns = [
     path('', include(router.urls)),

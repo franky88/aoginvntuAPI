@@ -3,7 +3,6 @@ from stuffs.models import Unit, Unitkit, Category, UnitStatus
 from users.models import Department
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenVerifySerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 import uuid
 
 User = get_user_model()
@@ -13,20 +12,16 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['email'] = user.email
+        token['full_name'] = f"{user.first_name} {user.last_name}"
         return token
-    
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
 
 class MyTokenVerifySerializer(TokenVerifySerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token['email'] = user.email
+        token['full_name'] = f"{user.first_name} {user.last_name}"
         return token
-    
-class MyTokenVerifyView(TokenVerifyView):
-    serializer_class = MyTokenVerifySerializer
 
 class DepartmentModelSerializer(serializers.ModelSerializer):
     profile_count = serializers.SerializerMethodField()

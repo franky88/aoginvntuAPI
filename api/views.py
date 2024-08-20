@@ -5,8 +5,9 @@ from rest_framework.response import Response
 from stuffs.models import Category, Unit, Unitkit, UnitStatus
 from users.models import Department
 from django.contrib.auth import get_user_model
-from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer
+from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer, MyTokenObtainPairSerializer, MyTokenVerifySerializer
 from rest_framework.decorators import api_view
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 
 User = get_user_model()
 
@@ -18,6 +19,12 @@ def getRoutes(request):
         "/token/verify",
     ]
     return Response(routes)
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+class MyTokenVerifyView(TokenVerifyView):
+    serializer_class = MyTokenVerifySerializer
 
 class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
