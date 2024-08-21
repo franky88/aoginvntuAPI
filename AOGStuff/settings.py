@@ -26,9 +26,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'stuffs',
+    'corsheaders',
     'rest_framework',
     'simple_history',
-    'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'users',
@@ -119,36 +119,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # rest framework
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
 }
-
-
-# Enable logging for template loading
-import logging
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s %(levelname)s %(message)s',
-    handlers=[logging.StreamHandler()]
-)
 
 # CORS settings
 # CORS_ALLOW_ALL_ORIGINS = True
 # or use
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000"
     # Add other allowed origins here
 ]
+# CORS_ALLOW_ALL_ORIGINS = True
 
+# Ensure the SameSite attribute is set properly
+# SESSION_COOKIE_SAMESITE = 'None'  
+SESSION_COOKIE_SECURE = False  # Ensures cookies are sent only over HTTPS
+
+# CSRF_COOKIE_SAMESITE = 'None'  
+CSRF_COOKIE_SECURE = False
+
+# Simple JWT settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
 
     "ALGORITHM": "HS256",
@@ -185,6 +188,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-APPEND_SLASH=True
+# APPEND_SLASH=True
 
 AUTH_USER_MODEL = 'users.User'
