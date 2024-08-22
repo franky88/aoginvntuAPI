@@ -8,6 +8,9 @@ from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKi
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 from rest_framework.permissions import IsAuthenticated
+from api.filters import UnitFilter
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 User = get_user_model()
 
@@ -30,20 +33,16 @@ class MyTokenObtainPairView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tokens = serializer.validated_data
-        user = serializer.user
-
-        print("User:", user)
-        print("Tokens:", tokens)
 
         # Set the tokens as HttpOnly cookies
-        res = Response({"success": True, "access": tokens['access']}, status=status.HTTP_200_OK)
+        res = Response({"success": True}, status=status.HTTP_200_OK)
         res.set_cookie(
             key='access_token',
             value=tokens['access'],
             httponly=True,
-            secure=True,  # Ensure this is only sent over HTTPS
+            secure=True,
             samesite='None',
-            max_age=3600,  # 1 hour for access token
+            max_age=86400,
         )
         res.set_cookie(
             key='refresh_token',
@@ -51,15 +50,15 @@ class MyTokenObtainPairView(TokenObtainPairView):
             httponly=True,
             secure=True,
             samesite='None',
-            max_age=604800,  # 1 week for refresh token
+            max_age=604800,
         )
         return res
 
 class LogoutView(APIView):
     def post(self, request):
         response = Response({"Message": "Logged out successfully"}, status=status.HTTP_200_OK)
-        response.delete_cookie('access_token', samesite='Lax', secure=True)
-        response.delete_cookie('refresh_token', samesite='Lax', secure=True)
+        response.delete_cookie('access_token', samesite='None')
+        response.delete_cookie('refresh_token', samesite='None')
 
         return response
 
@@ -67,7 +66,6 @@ class CurrentUserView(APIView):
     permission_classes = user_permissions
 
     def get(self, request):
-        print(f"User: {request.user}")
         if not request.user.is_authenticated:
             return Response({"detail": "User is not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = UserModelSerializer(request.user)
@@ -96,6 +94,8 @@ class UnitViewset(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
     serializer_class = UnitModelSerializer
     permission_classes = user_permissions
+    filterset_class = UnitFilter
+    filter_backends = [DjangoFilterBackend]
 
 class UnitkitViewset(viewsets.ModelViewSet):
     queryset = Unitkit.objects.all()

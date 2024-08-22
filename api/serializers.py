@@ -36,7 +36,7 @@ class UserModelSerializer(serializers.ModelSerializer):
     department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all(), required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'position', 'contact', 'birth_date', 'is_staff', 'employee_id', 'department']
+        fields = ['id', 'first_name', 'last_name', 'email', 'position', 'contact', 'birth_date', 'is_staff', 'employee_id', 'is_active', 'department']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -119,7 +119,7 @@ class UnitModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Unit
-        fields = ['id', 'create_by', 'name', 'category', 'item_status', 'model', 'date_purchased', 'cost', 'serial', 'unit_kit', 'history', 'created', 'updated']
+        fields = ['id', 'barcode', 'create_by', 'name', 'category', 'item_status', 'model', 'date_purchased', 'cost', 'serial', 'unit_kit', 'history', 'created', 'updated']
 
     def update(self, instance, validated_data):
         # Handle updating simple fields directly on the instance

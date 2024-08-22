@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'users',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -120,7 +121,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # rest framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'api.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -140,10 +142,10 @@ CORS_ALLOWED_ORIGINS = [
 # CORS_ALLOW_ALL_ORIGINS = True
 
 # Ensure the SameSite attribute is set properly
-# SESSION_COOKIE_SAMESITE = 'None'  
+SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = False  # Ensures cookies are sent only over HTTPS
 
-# CSRF_COOKIE_SAMESITE = 'None'  
+CSRF_COOKIE_SAMESITE = 'None'  
 CSRF_COOKIE_SECURE = False
 
 # Simple JWT settings

@@ -13,7 +13,7 @@ router.register(r'units', UnitViewset)
 router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)
 router.register(r'unit-status', UnitStatusViewset)
-router.register(r'department', DepartmentViewset)
+router.register(r'departments', DepartmentViewset)
 
 urlpatterns = [
     path('', include(router.urls)),
