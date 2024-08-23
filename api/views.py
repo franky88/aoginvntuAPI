@@ -7,9 +7,10 @@ from django.contrib.auth import get_user_model
 from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer, MyTokenObtainPairSerializer, MyTokenVerifySerializer
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from api.filters import UnitFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 
 
 User = get_user_model()
@@ -79,6 +80,82 @@ class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserModelSerializer
     permission_classes = user_permissions
+
+    @action(detail=False)
+    def recent_users(self, request):
+        recent_users = User.objects.order_by('-last_login')
+
+        page = self.paginate_queryset(recent_users)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(recent_users, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False)
+    def all(self, request):
+        print(self.get_queryset())
+        all = self.get_queryset().filter(is_active=True)
+
+        page = self.paginate_queryset(all)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(all, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False)
+    def working(self, request):
+        print(self.get_queryset())
+        working = self.get_queryset().filter(is_active=True, is_working=True)
+
+        page = self.paginate_queryset(working)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(working, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False)
+    def resigned(self, request):
+        resigned = self.get_queryset().filter(is_active=True, is_working=False)
+
+        page = self.paginate_queryset(resigned)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(resigned, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False)
+    def archived(self, request):
+        archived = self.get_queryset().filter(is_active=False, is_working=False)
+
+        page = self.paginate_queryset(archived)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(archived, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['GET','POST'])
+    def is_archived(self, request, pk=None):
+        user = self.get_object()
+        if not user.is_working:
+            user.is_active = not user.is_active
+        else:
+            user.is_active = True
+            user.is_working = False
+        user.save()
+        serializer = self.get_serializer(user)
+        return Response({"User": serializer.data}, status=status.HTTP_200_OK)
+
+        
 
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()

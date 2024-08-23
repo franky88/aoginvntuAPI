@@ -38,6 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=30, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    is_working = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     employee_id = models.CharField(max_length=20, unique=True)
     position = models.CharField(max_length=120, blank=True, null=True)

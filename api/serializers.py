@@ -36,7 +36,7 @@ class UserModelSerializer(serializers.ModelSerializer):
     department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all(), required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'position', 'contact', 'birth_date', 'is_staff', 'employee_id', 'is_active', 'department']
+        fields = ['id', 'first_name', 'last_name', 'email', 'position', 'contact', 'birth_date', 'is_staff', 'employee_id', 'is_active', 'is_working', 'department', 'last_login']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
