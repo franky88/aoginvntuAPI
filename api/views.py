@@ -1,10 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from stuffs.models import Category, Unit, Unitkit, UnitStatus
+from stuffs.models import Category, Unit, Unitkit, UnitStatus, KitAssignment
 from users.models import Department
 from django.contrib.auth import get_user_model
-from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer, MyTokenObtainPairSerializer, MyTokenVerifySerializer
+from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer, MyTokenObtainPairSerializer, MyTokenVerifySerializer, KitAssignmentModelSerializer
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -182,4 +182,9 @@ class UnitkitViewset(viewsets.ModelViewSet):
 class DepartmentViewset(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentModelSerializer
+    permission_classes = user_permissions
+
+class KitAssignmentViewset(viewsets.ModelViewSet):
+    queryset = KitAssignment.objects.all()
+    serializer_class = KitAssignmentModelSerializer
     permission_classes = user_permissions

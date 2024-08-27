@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from api.views import UnitViewset, CategoryViewset, UnitkitViewset, UnitStatusViewset, getRoutes, DepartmentViewset, UserViewset
+from api.views import UnitViewset, CategoryViewset, UnitkitViewset, UnitStatusViewset, getRoutes, DepartmentViewset, UserViewset, KitAssignmentViewset
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
@@ -14,6 +14,7 @@ router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)
 router.register(r'unit-status', UnitStatusViewset)
 router.register(r'departments', DepartmentViewset)
+router.register(r'assignments', KitAssignmentViewset)
 
 urlpatterns = [
     path('', include(router.urls)),

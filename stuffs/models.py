@@ -34,7 +34,7 @@ class UnitStatus(models.Model):
 class Unitkit(models.Model):
     kit_code = models.CharField(max_length=13, unique=True, null=True, blank=True)
     name = models.CharField(max_length=120)
-    assign_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    is_available = models.BooleanField(default=True)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 
@@ -63,15 +63,48 @@ class Unit(models.Model):
     def __str__(self):
         return self.name.upper()
     
+class KitAssignment(models.Model):
+    unit_kit = models.ForeignKey(Unitkit, on_delete=models.SET_NULL, null=True, blank=True)
+    assign_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date_assigned = models.DateField()
+    date_returned = models.DateField(null=True, blank=True)
+    remarks = models.TextField(blank=True, null=True)
+    is_returned = models.BooleanField(default=False)
+    created = models.DateField(auto_now_add=True)
+    updated = models.DateField(auto_now=True)
 
-@receiver(pre_save, sender=Unitkit)
-def unitkit_pre_save(sender, instance, *args, **kwargs):
-    if not instance.kit_code:
+    def __str__(self):
+        assigned = "%s - %s"%(self.unit_kit, self.assign_to)
+        return assigned
+
+
+@receiver(post_save, sender=Unitkit)
+def unitkit_postsave(sender, instance, created, *args, **kwargs):
+    if created and not instance.kit_code:
         kit_code = str(uuid.uuid4()).replace("-", "").upper()[:8]
         instance.kit_code = kit_code
+        Unitkit.objects.filter(pk=instance.pk).update(kit_code=kit_code)
 
 @receiver(pre_save, sender=Unit)
 def unit_pre_save(sender, instance, *args, **kwargs):
     if not instance.barcode:
         barcode = str(uuid.uuid4().int).replace("-", "").upper()[:13]
         instance.barcode = barcode
+
+@receiver(pre_save, sender=KitAssignment)
+def kit_assignment_pre_save(sender, instance, *args, **kwargs):
+    if instance.date_returned:
+        instance.is_returned = True
+    else:
+        instance.is_returned = False
+
+@receiver(post_save, sender=KitAssignment)
+def kit_assignment_post_save(sender, instance, created, **kwargs):
+    if created:
+        if instance.unit_kit.is_available:
+            instance.unit_kit.is_available = False
+            instance.unit_kit.save(update_fields=['is_available'])
+    else:
+        if not instance.unit_kit.is_available:
+            instance.unit_kit.is_available = True
+            instance.unit_kit.save(update_fields=['is_available'])
