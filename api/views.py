@@ -174,6 +174,30 @@ class UnitViewset(viewsets.ModelViewSet):
     filterset_class = UnitFilter
     filter_backends = [DjangoFilterBackend]
 
+    @action(detail=False)
+    def working(self, request):
+        working = self.get_queryset().filter(item_status__name="Working")
+
+        page = self.paginate_queryset(working)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(working, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False)
+    def maintenance(self, request):
+        maintenance = self.get_queryset().filter(item_status__name="Maintenance")
+
+        page = self.paginate_queryset(maintenance)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(maintenance, many=True)
+        return Response(serializer.data)
+
 class UnitkitViewset(viewsets.ModelViewSet):
     queryset = Unitkit.objects.all()
     serializer_class = UnitKitModelSerializer

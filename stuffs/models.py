@@ -49,6 +49,7 @@ class Unit(models.Model):
     barcode = models.CharField(max_length=60, unique=True, null=True, blank=True)
     name = models.CharField(max_length=120)
     model = models.CharField(max_length=60, null=True, blank=True)
+    descriptions = models.TextField(blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
     date_purchased = models.DateField()
     cost = models.FloatField()
