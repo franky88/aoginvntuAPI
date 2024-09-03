@@ -71,6 +71,7 @@ class KitAssignment(models.Model):
     date_returned = models.DateField(null=True, blank=True)
     remarks = models.TextField(blank=True, null=True)
     is_returned = models.BooleanField(default=False)
+    is_available = models.BooleanField(default=True)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 

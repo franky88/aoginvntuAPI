@@ -11,11 +11,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from api.filters import UnitFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
+from datetime import datetime
 
 
 User = get_user_model()
 
 user_permissions = [IsAuthenticated]
+
+today = datetime.now()
 
 @api_view(['GET'])
 def getRoutes(request):
@@ -212,3 +215,15 @@ class KitAssignmentViewset(viewsets.ModelViewSet):
     queryset = KitAssignment.objects.all()
     serializer_class = KitAssignmentModelSerializer
     permission_classes = user_permissions
+
+    @action(detail=True, methods=['GET','POST'])
+    def returned(self, request, pk=None):
+        kit = self.get_object()
+        if not kit.is_returned:
+            kit.is_returned = not kit.is_returned
+        kit.assign_to = None
+        kit.date_returned = today
+        kit.is_available = True
+        kit.save()
+        serializer = self.get_serializer(kit)
+        return Response({"Kit": serializer.data}, status=status.HTTP_200_OK)
