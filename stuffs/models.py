@@ -75,6 +75,8 @@ class KitAssignment(models.Model):
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 
+    history = HistoricalRecords()
+
     def __str__(self):
         assigned = "%s - %s"%(self.unit_kit, self.assign_to)
         return assigned

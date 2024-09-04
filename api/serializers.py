@@ -102,7 +102,7 @@ class UnitKitModelSerializer(serializers.ModelSerializer):
 
 
 class UnitModelSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
+    # category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
     item_status = serializers.PrimaryKeyRelatedField(queryset=UnitStatus.objects.all(), required=False, allow_null=True)
     create_by = UserModelSerializer(read_only=True)
     unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.all(), required=False, allow_null=True)
@@ -111,9 +111,48 @@ class UnitModelSerializer(serializers.ModelSerializer):
         model = Unit
         fields = ['id', 'barcode', 'create_by', 'name', 'descriptions', 'category', 'item_status', 'model', 'date_purchased', 'cost', 'serial', 'unit_kit', 'created', 'updated']
 
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     if instance.category:
+    #         representation['category'] = instance.category.name
+        
+    #     return representation
+    
 class KitAssignmentModelSerializer(serializers.ModelSerializer):
     unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.filter(is_available=True), required=False, allow_null=True)
 
     class Meta:
         model = KitAssignment
-        fields = ['id', 'unit_kit', 'assign_to', 'date_assigned', 'date_returned', 'is_returned', 'remarks']
+        fields = ['id', 'unit_kit', 'assign_to', 'date_assigned', 'date_returned', 'is_returned', 'is_returned', 'remarks', 'history']
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['history'] = self.get_history(instance)
+        return representation
+
+    def get_history(self, obj):
+        history_records = obj.history.all()
+        serialized_history = []
+
+        for record in history_records:
+            changed_by = record.history_user.email if record.history_user else 'Unknown User'
+
+            serialized_record = {
+                'change_reason': record.history_type,
+                'changed_by': changed_by,
+                'timestamp': record.history_date,
+                'snapshot': {
+                    'id': record.id,
+                    'unit_kit': record.unit_kit.name,
+                    'assign_to': record.assign_to,
+                    'date_assigned': record.date_assigned,
+                    'date_returned': record.date_returned,
+                    'is_available': record.is_available,
+                    'is_returned': record.is_returned,
+                    'remarks': record.remarks,
+                    'updated': record.updated,
+                }
+            }
+            serialized_history.append(serialized_record)
+
+        return serialized_history

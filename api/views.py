@@ -18,8 +18,6 @@ User = get_user_model()
 
 user_permissions = [IsAuthenticated]
 
-today = datetime.now()
-
 @api_view(['GET'])
 def getRoutes(request):
     routes = [
@@ -222,7 +220,7 @@ class KitAssignmentViewset(viewsets.ModelViewSet):
         if not kit.is_returned:
             kit.is_returned = not kit.is_returned
         kit.assign_to = None
-        kit.date_returned = today
+        kit.date_returned = datetime.now().date()
         kit.is_available = True
         kit.save()
         serializer = self.get_serializer(kit)
