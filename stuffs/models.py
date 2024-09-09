@@ -44,18 +44,37 @@ class Unitkit(models.Model):
         data = "%s-%s"%(self.name, self.kit_code)
         return data
     
-class Unit(models.Model):
-    create_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+class Item(models.Model):
+    create_by = models.ForeignKey(User, related_name="items", on_delete=models.SET_NULL, null=True, blank=True)
     barcode = models.CharField(max_length=60, unique=True, null=True, blank=True)
     name = models.CharField(max_length=120)
     model = models.CharField(max_length=60, null=True, blank=True)
     descriptions = models.TextField(blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
-    date_purchased = models.DateField()
+    created = models.DateField(auto_now_add=True)
+    updated = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.name.upper()
+
+class ItemTransaction(models.Model):
+    process_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    item = models.ForeignKey(Item, related_name="item_transactions", on_delete=models.SET_NULL, null=True, blank=True)
+    date_purchased = models.DateField(blank=True, null=True)
     cost = models.FloatField()
+    quantity = models.IntegerField()
+    created = models.DateField(auto_now_add=True)
+    updated = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.item.name.upper()
+
+class Unit(models.Model):
+    create_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    item = models.ForeignKey(Item, related_name="units", on_delete=models.SET_NULL, null=True, blank=True)
     serial = models.CharField(max_length=120, unique=True)
     unit_kit = models.ForeignKey(Unitkit, on_delete=models.SET_NULL, null=True, blank=True)
-    item_status = models.ForeignKey(UnitStatus, on_delete=models.SET_NULL, null=True, blank=True)
+    unit_status = models.ForeignKey(UnitStatus, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 
@@ -95,20 +114,27 @@ def unit_pre_save(sender, instance, *args, **kwargs):
         barcode = str(uuid.uuid4().int).replace("-", "").upper()[:13]
         instance.barcode = barcode
 
-@receiver(pre_save, sender=KitAssignment)
-def kit_assignment_pre_save(sender, instance, *args, **kwargs):
-    if instance.date_returned:
-        instance.is_returned = True
-    else:
-        instance.is_returned = False
-
-@receiver(post_save, sender=KitAssignment)
-def kit_assignment_post_save(sender, instance, created, **kwargs):
+@receiver(post_save, sender=Item)
+def item_postsave(sender, instance, created, *args, **kwargs):
     if created:
-        if instance.unit_kit.is_available:
-            instance.unit_kit.is_available = False
-            instance.unit_kit.save(update_fields=['is_available'])
-    else:
-        if not instance.unit_kit.is_available:
-            instance.unit_kit.is_available = True
-            instance.unit_kit.save(update_fields=['is_available'])
+        instance.__item_status__unit_status__name = "working"
+        instance.__item_status__item__id = instance.id
+        instance.save()
+
+# @receiver(pre_save, sender=KitAssignment)
+# def kit_assignment_pre_save(sender, instance, *args, **kwargs):
+#     if instance.date_returned:
+#         instance.is_returned = True
+#     else:
+#         instance.is_returned = False
+
+# @receiver(post_save, sender=KitAssignment)
+# def kit_assignment_post_save(sender, instance, created, **kwargs):
+#     if created:
+#         if instance.unit_kit.is_available:
+#             instance.unit_kit.is_available = False
+#             instance.unit_kit.save(update_fields=['is_available'])
+#     else:
+#         if not instance.unit_kit.is_available:
+#             instance.unit_kit.is_available = True
+#             instance.unit_kit.save(update_fields=['is_available'])

@@ -1,15 +1,36 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from stuffs.models import Category, Unit, Unitkit, UnitStatus, KitAssignment
+from stuffs.models import (
+    Category, 
+    Unit, 
+    Unitkit, 
+    UnitStatus, 
+    KitAssignment, 
+    Item, 
+    ItemTransaction
+    )
 from users.models import Department
 from django.contrib.auth import get_user_model
-from api.serializers import UnitModelSerializer, CategoryModelSerializer, UnitKitModelSerializer, UnitStatusModelSerializer, DepartmentModelSerializer, UserModelSerializer, MyTokenObtainPairSerializer, MyTokenVerifySerializer, KitAssignmentModelSerializer
+from api.serializers import (
+    UnitModelSerializer,
+    CategoryModelSerializer,
+    UnitKitModelSerializer,
+    UnitStatusModelSerializer,
+    DepartmentModelSerializer,
+    UserModelSerializer,
+    MyTokenObtainPairSerializer,
+    MyTokenVerifySerializer,
+    KitAssignmentModelSerializer,
+    ItemModelSerializer,
+    ItemTransactionModelSerializer,
+    )
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from api.filters import UnitFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from datetime import datetime
 
@@ -17,6 +38,9 @@ from datetime import datetime
 User = get_user_model()
 
 user_permissions = [IsAuthenticated]
+
+class UnitPagination(PageNumberPagination):
+    page_size=10
 
 @api_view(['GET'])
 def getRoutes(request):
@@ -36,7 +60,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
         serializer.is_valid(raise_exception=True)
         tokens = serializer.validated_data
 
-        # Set the tokens as HttpOnly cookies
         res = Response({"success": True}, status=status.HTTP_200_OK)
         res.set_cookie(
             key='access_token',
@@ -156,12 +179,35 @@ class UserViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(user)
         return Response({"User": serializer.data}, status=status.HTTP_200_OK)
 
-        
-
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategoryModelSerializer
     permission_classes = user_permissions
+
+class ItemTransactionViewset(viewsets.ModelViewSet):
+    queryset = ItemTransaction.objects.all()
+    serializer_class = ItemTransactionModelSerializer
+    permission_classes = user_permissions
+    
+class ItemViewset(viewsets.ModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = ItemModelSerializer
+    permission_classes = user_permissions
+
+    @action(detail=False)
+    def working(self, request):
+        working_items = self.get_queryset().filter(
+            units__unit_status__name="working"
+        )
+
+        page = self.paginate_queryset(working_items)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(working_items, many=True)
+        return Response(serializer.data)
+
 
 class UnitStatusViewset(viewsets.ModelViewSet):
     queryset = UnitStatus.objects.all()
@@ -174,29 +220,28 @@ class UnitViewset(viewsets.ModelViewSet):
     permission_classes = user_permissions
     filterset_class = UnitFilter
     filter_backends = [DjangoFilterBackend]
+    pagination_class = UnitPagination
 
     @action(detail=False)
     def working(self, request):
-        working = self.get_queryset().filter(item_status__name="Working")
-
-        page = self.paginate_queryset(working)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(working, many=True)
-        return Response(serializer.data)
+        return self._filter_by_status("working")
     
     @action(detail=False)
     def maintenance(self, request):
-        maintenance = self.get_queryset().filter(item_status__name="Maintenance")
+        return self._filter_by_status("maintenance")
+    
+    @action(detail=False)
+    def not_working(self, request):
+        return self._filter_by_status("not working")
 
-        page = self.paginate_queryset(maintenance)
+    def _filter_by_status(self, status_name):
+        queryset = self.get_queryset().filter(unit_status__name=status_name)
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(maintenance, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 class UnitkitViewset(viewsets.ModelViewSet):

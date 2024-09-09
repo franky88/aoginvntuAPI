@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from stuffs.models import Unit, Unitkit, Category, UnitStatus, KitAssignment
+from stuffs.models import (
+    Unit, 
+    Unitkit, 
+    Category, 
+    UnitStatus, 
+    KitAssignment, 
+    Item,
+    ItemTransaction,
+    )
 from users.models import Department
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenVerifySerializer
@@ -47,6 +55,16 @@ class CategoryModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
+
+class ItemModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['id', 'create_by', 'barcode', 'name', 'model', 'descriptions', 'category']
+
+class ItemTransactionModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemTransaction
+        fields = ['id', 'process_by', 'item', 'date_purchased', 'cost', 'quantity', 'created', 'updated']
 
 class UnitStatusModelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -102,21 +120,13 @@ class UnitKitModelSerializer(serializers.ModelSerializer):
 
 
 class UnitModelSerializer(serializers.ModelSerializer):
-    # category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
-    item_status = serializers.PrimaryKeyRelatedField(queryset=UnitStatus.objects.all(), required=False, allow_null=True)
     create_by = UserModelSerializer(read_only=True)
     unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Unit
-        fields = ['id', 'barcode', 'create_by', 'name', 'descriptions', 'category', 'item_status', 'model', 'date_purchased', 'cost', 'serial', 'unit_kit', 'created', 'updated']
+        fields = ['id', 'create_by', 'item', 'serial', 'unit_kit', 'unit_status', 'created', 'updated']
 
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     if instance.category:
-    #         representation['category'] = instance.category.name
-        
-    #     return representation
     
 class KitAssignmentModelSerializer(serializers.ModelSerializer):
     unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.filter(is_available=True), required=False, allow_null=True)

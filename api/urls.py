@@ -1,6 +1,17 @@
 from django.urls import path, include
 from rest_framework import routers
-from api.views import UnitViewset, CategoryViewset, UnitkitViewset, UnitStatusViewset, getRoutes, DepartmentViewset, UserViewset, KitAssignmentViewset
+from api.views import (
+    UnitViewset, 
+    CategoryViewset, 
+    UnitkitViewset, 
+    UnitStatusViewset, 
+    getRoutes, 
+    DepartmentViewset, 
+    UserViewset, 
+    KitAssignmentViewset,
+    ItemViewset,
+    ItemTransactionViewset,
+    )
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
@@ -9,6 +20,8 @@ from api.views import MyTokenObtainPairView, LogoutView, CurrentUserView
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewset)
+router.register(r'items', ItemViewset)
+router.register(r'item-transactions', ItemTransactionViewset)
 router.register(r'units', UnitViewset)
 router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)
