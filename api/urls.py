@@ -11,6 +11,7 @@ from api.views import (
     KitAssignmentViewset,
     ItemViewset,
     ItemTransactionViewset,
+    ItemStatusViewset,
     )
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -22,6 +23,7 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewset)
 router.register(r'items', ItemViewset)
 router.register(r'item-transactions', ItemTransactionViewset)
+router.register(r'item-status', ItemStatusViewset)
 router.register(r'units', UnitViewset)
 router.register(r'categories', CategoryViewset)
 router.register(r'kits', UnitkitViewset)

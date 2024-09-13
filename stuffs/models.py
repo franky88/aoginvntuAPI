@@ -54,8 +54,12 @@ class Item(models.Model):
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 
+    def item_name(self):
+        name = "%s - (%s)"%(self.name, self.model)
+        return name.upper()
+
     def __str__(self):
-        return self.name.upper()
+        return self.item_name()
 
 class ItemTransaction(models.Model):
     process_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -70,22 +74,31 @@ class ItemTransaction(models.Model):
         return self.item.name.upper()
 
 class Unit(models.Model):
-    create_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     item = models.ForeignKey(Item, related_name="units", on_delete=models.SET_NULL, null=True, blank=True)
     serial = models.CharField(max_length=120, unique=True)
-    unit_kit = models.ForeignKey(Unitkit, on_delete=models.SET_NULL, null=True, blank=True)
-    unit_status = models.ForeignKey(UnitStatus, on_delete=models.SET_NULL, null=True, blank=True)
+    unit_kit = models.ForeignKey(Unitkit, related_name='units', on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
 
     history = HistoricalRecords()
 
     def __str__(self):
-        return self.name.upper()
+        return self.item.name.title()
+    
+class ItemStatus(models.Model):
+    item = models.ForeignKey(Item, related_name="item_status", on_delete=models.SET_NULL, null=True, blank=True)
+    unit_status = models.ForeignKey(UnitStatus, related_name="item_status", on_delete=models.SET_NULL, null=True, blank=True)
+    serial = models.CharField(max_length=120, unique=True)
+    remarks = models.TextField(blank=True, null=True)
+    date_reported = models.DateField(auto_now_add=True)
+    updated = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.item.name.upper()
     
 class KitAssignment(models.Model):
-    unit_kit = models.ForeignKey(Unitkit, on_delete=models.SET_NULL, null=True, blank=True)
-    assign_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    unit_kit = models.ForeignKey(Unitkit, related_name="kit_assignments", on_delete=models.SET_NULL, null=True, blank=True)
+    assign_to = models.ForeignKey(User, related_name="kit_assignments", on_delete=models.SET_NULL, null=True, blank=True)
     date_assigned = models.DateField()
     date_returned = models.DateField(null=True, blank=True)
     remarks = models.TextField(blank=True, null=True)
@@ -108,33 +121,9 @@ def unitkit_postsave(sender, instance, created, *args, **kwargs):
         instance.kit_code = kit_code
         Unitkit.objects.filter(pk=instance.pk).update(kit_code=kit_code)
 
-@receiver(pre_save, sender=Unit)
-def unit_pre_save(sender, instance, *args, **kwargs):
-    if not instance.barcode:
-        barcode = str(uuid.uuid4().int).replace("-", "").upper()[:13]
-        instance.barcode = barcode
-
 @receiver(post_save, sender=Item)
 def item_postsave(sender, instance, created, *args, **kwargs):
     if created:
         instance.__item_status__unit_status__name = "working"
         instance.__item_status__item__id = instance.id
         instance.save()
-
-# @receiver(pre_save, sender=KitAssignment)
-# def kit_assignment_pre_save(sender, instance, *args, **kwargs):
-#     if instance.date_returned:
-#         instance.is_returned = True
-#     else:
-#         instance.is_returned = False
-
-# @receiver(post_save, sender=KitAssignment)
-# def kit_assignment_post_save(sender, instance, created, **kwargs):
-#     if created:
-#         if instance.unit_kit.is_available:
-#             instance.unit_kit.is_available = False
-#             instance.unit_kit.save(update_fields=['is_available'])
-#     else:
-#         if not instance.unit_kit.is_available:
-#             instance.unit_kit.is_available = True
-#             instance.unit_kit.save(update_fields=['is_available'])

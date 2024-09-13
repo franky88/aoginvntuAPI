@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.db.models import F
 from stuffs.models import (
     Category, 
     Unit, 
@@ -8,7 +9,8 @@ from stuffs.models import (
     UnitStatus, 
     KitAssignment, 
     Item, 
-    ItemTransaction
+    ItemTransaction,
+    ItemStatus
     )
 from users.models import Department
 from django.contrib.auth import get_user_model
@@ -24,6 +26,7 @@ from api.serializers import (
     KitAssignmentModelSerializer,
     ItemModelSerializer,
     ItemTransactionModelSerializer,
+    ItemStatusModelSerializer
     )
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
@@ -178,6 +181,14 @@ class UserViewset(viewsets.ModelViewSet):
         user.save()
         serializer = self.get_serializer(user)
         return Response({"User": serializer.data}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'])
+    def unit_assignment(self, request, pk=None):
+        user = self.get_object()
+        kit_assignment = user.kit_assignments.filter(assign_to=user)
+
+        serializer = KitAssignmentModelSerializer(kit_assignment, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -195,17 +206,29 @@ class ItemViewset(viewsets.ModelViewSet):
     permission_classes = user_permissions
 
     @action(detail=False)
-    def working(self, request):
-        working_items = self.get_queryset().filter(
-            units__unit_status__name="working"
-        )
+    def available(self, request):
+        item_available = self.get_queryset().filter(item_transactions__quantity__gte=1)
 
-        page = self.paginate_queryset(working_items)
+        page = self.paginate_queryset(item_available)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(working_items, many=True)
+        serializer = self.get_serializer(item_available, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['POST'])
+    def update_quantity_sub(self, request, pk=None):
+        item = self.get_object()
+        item.item_transactions.update(quantity=F('quantity') - 1)
+        serializer = self.get_serializer(item)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['POST'])
+    def update_quantity_add(self, request, pk=None):
+        item = self.get_object()
+        item.item_transactions.update(quantity=F('quantity') + 1)
+        serializer = self.get_serializer(item)
         return Response(serializer.data)
 
 
@@ -222,31 +245,86 @@ class UnitViewset(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     pagination_class = UnitPagination
 
-    @action(detail=False)
-    def working(self, request):
-        return self._filter_by_status("working")
+    # @action(detail=False)
+    # def working(self, request):
+    #     return self._filter_by_status("working")
     
-    @action(detail=False)
-    def maintenance(self, request):
-        return self._filter_by_status("maintenance")
+    # @action(detail=False)
+    # def maintenance(self, request):
+    #     return self._filter_by_status("maintenance")
     
-    @action(detail=False)
-    def not_working(self, request):
-        return self._filter_by_status("not working")
+    # @action(detail=False)
+    # def not_working(self, request):
+    #     return self._filter_by_status("not working")
 
-    def _filter_by_status(self, status_name):
-        queryset = self.get_queryset().filter(unit_status__name=status_name)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+    # def _filter_by_status(self, status_name):
+    #     queryset = self.get_queryset().filter(unit_status__name=status_name)
+    #     page = self.paginate_queryset(queryset)
+    #     if page is not None:
+    #         serializer = self.get_serializer(page, many=True)
+    #         return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
 
 class UnitkitViewset(viewsets.ModelViewSet):
     queryset = Unitkit.objects.all()
     serializer_class = UnitKitModelSerializer
+    permission_classes = user_permissions
+
+    @action(detail=True, methods=['POST'])
+    def assign_unit_kit(self, request, pk=None):
+        unit_kit = self.get_object()
+
+        unit_kit.is_available = False
+        unit_kit.save()
+
+        serializer = UnitKitModelSerializer(unit_kit)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['PUT'])
+    def return_assign_unit_kit(self, request, pk=None):
+        unit_kit = self.get_object()
+
+        unit_kit.is_available = True
+        unit_kit.save()
+
+        if unit_kit.kit_assignments.exists():
+            for assignment in unit_kit.kit_assignments.all():
+                assignment.is_available = True
+                assignment.is_returned = True
+                assignment.assign_to = None
+                assignment.unit_kit = None
+                assignment.date_returned = datetime.now().date()
+                assignment.save() 
+
+        serializer = UnitKitModelSerializer(unit_kit)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'])
+    def kit_unit_belong_to(self, request, pk=None):
+        unit_kit = self.get_object()
+        
+        kit_assignments = unit_kit.kit_assignments.filter(unit_kit=unit_kit)
+        
+        if not kit_assignments.exists():
+            return Response({"detail": "No kit assignments found for this unit kit."}, status=status.HTTP_404_NOT_FOUND)
+        
+        kit_assignment = kit_assignments.first()
+        
+        serializer = KitAssignmentModelSerializer(kit_assignment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'])
+    def get_all_units(self, request, pk=None):
+        unit_kit = self.get_object()
+        units = unit_kit.units.all()
+        serlializer = UnitModelSerializer(units, many=True)
+        return Response(serlializer.data)
+    
+class ItemStatusViewset(viewsets.ModelViewSet):
+    queryset = ItemStatus.objects.all()
+    serializer_class = ItemStatusModelSerializer
     permission_classes = user_permissions
 
 class DepartmentViewset(viewsets.ModelViewSet):
@@ -255,18 +333,6 @@ class DepartmentViewset(viewsets.ModelViewSet):
     permission_classes = user_permissions
 
 class KitAssignmentViewset(viewsets.ModelViewSet):
-    queryset = KitAssignment.objects.all()
+    queryset = KitAssignment.objects.all().order_by('-id')
     serializer_class = KitAssignmentModelSerializer
     permission_classes = user_permissions
-
-    @action(detail=True, methods=['GET','POST'])
-    def returned(self, request, pk=None):
-        kit = self.get_object()
-        if not kit.is_returned:
-            kit.is_returned = not kit.is_returned
-        kit.assign_to = None
-        kit.date_returned = datetime.now().date()
-        kit.is_available = True
-        kit.save()
-        serializer = self.get_serializer(kit)
-        return Response({"Kit": serializer.data}, status=status.HTTP_200_OK)

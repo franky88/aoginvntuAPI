@@ -7,6 +7,7 @@ from stuffs.models import (
     KitAssignment, 
     Item,
     ItemTransaction,
+    ItemStatus
     )
 from users.models import Department
 from django.contrib.auth import get_user_model
@@ -71,6 +72,11 @@ class UnitStatusModelSerializer(serializers.ModelSerializer):
         model = UnitStatus
         fields = ['id', 'name']
 
+class ItemStatusModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemStatus
+        fields = ['id', 'item', 'unit_status', 'serial', 'remarks', 'date_reported', 'updated']
+
 class UnitKitModelSerializer(serializers.ModelSerializer):
     kit_code = serializers.CharField(required=False, allow_blank=True)
 
@@ -82,7 +88,6 @@ class UnitKitModelSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        # Update simple fields directly on the instance
         instance.kit_code = validated_data.get('kit_code', instance.kit_code)
         instance.name = validated_data.get('name', instance.name)
         instance.is_available = validated_data.get('is_available', instance.is_available)
@@ -120,12 +125,28 @@ class UnitKitModelSerializer(serializers.ModelSerializer):
 
 
 class UnitModelSerializer(serializers.ModelSerializer):
-    create_by = UserModelSerializer(read_only=True)
-    unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.all(), required=False, allow_null=True)
+    unit_kit_name = serializers.SerializerMethodField(read_only=True)
+    item_name = serializers.SerializerMethodField(read_only=True)
+    unit_kit = serializers.PrimaryKeyRelatedField(
+        queryset=Unitkit.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    item = serializers.PrimaryKeyRelatedField(
+        queryset=Item.objects.all(),
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = Unit
-        fields = ['id', 'create_by', 'item', 'serial', 'unit_kit', 'unit_status', 'created', 'updated']
+        fields = ['id', 'item', 'item_name', 'serial', 'unit_kit', 'unit_kit_name', 'created', 'updated']
+
+    def get_unit_kit_name(self, obj):
+        return obj.unit_kit.name if obj.unit_kit else None
+    
+    def get_item_name(self, obj):
+        return obj.item.name if obj.item else None
 
     
 class KitAssignmentModelSerializer(serializers.ModelSerializer):
@@ -146,6 +167,7 @@ class KitAssignmentModelSerializer(serializers.ModelSerializer):
 
         for record in history_records:
             changed_by = record.history_user.email if record.history_user else 'Unknown User'
+            assign_to = record.assign_to.email if record.assign_to else 'Unassigned'  # Convert the User object to a string
 
             serialized_record = {
                 'change_reason': record.history_type,
@@ -153,8 +175,8 @@ class KitAssignmentModelSerializer(serializers.ModelSerializer):
                 'timestamp': record.history_date,
                 'snapshot': {
                     'id': record.id,
-                    'unit_kit': record.unit_kit.name,
-                    'assign_to': record.assign_to,
+                    'unit_kit': record.unit_kit.name if record.unit_kit else None,
+                    'assign_to': assign_to,  # Serialized as a string
                     'date_assigned': record.date_assigned,
                     'date_returned': record.date_returned,
                     'is_available': record.is_available,
