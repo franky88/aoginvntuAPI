@@ -189,6 +189,18 @@ class UserViewset(viewsets.ModelViewSet):
 
         serializer = KitAssignmentModelSerializer(kit_assignment, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['PUT'])
+    def upload_edit_image(self, request, pk=None):
+        user = self.get_object()
+        if 'image' in request.FILES:
+            user.image = request.FILES['image']
+            # user.save()
+        serializer = UserModelSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
