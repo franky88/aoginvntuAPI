@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -186,16 +187,17 @@ class UserViewset(viewsets.ModelViewSet):
     def unit_assignment(self, request, pk=None):
         user = self.get_object()
         kit_assignment = user.kit_assignments.filter(assign_to=user)
-
-        serializer = KitAssignmentModelSerializer(kit_assignment, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if kit_assignment.exists():
+            serializer = KitAssignmentModelSerializer(kit_assignment, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "No kit assignments found for this user."}, status=status.HTTP_404_NOT_FOUND)
     
     @action(detail=True, methods=['PUT'])
     def upload_edit_image(self, request, pk=None):
         user = self.get_object()
-        if 'image' in request.FILES:
+        if 'image' in request.FILES or None:
             user.image = request.FILES['image']
-            # user.save()
         serializer = UserModelSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -311,6 +313,17 @@ class UnitkitViewset(viewsets.ModelViewSet):
                 assignment.save() 
 
         serializer = UnitKitModelSerializer(unit_kit)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'])
+    def get_unit_list(self, request, pk=None):
+        kit = self.get_object()
+
+        units = kit.units.filter(unit_kit=kit.id)
+
+        print("units: ", units)
+
+        serializer = UnitModelSerializer(units, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['GET'])
