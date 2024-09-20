@@ -1,13 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 from simple_history.models import HistoricalRecords
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 import uuid
-import datetime
 
 User = get_user_model()
 
@@ -86,6 +83,7 @@ class Unit(models.Model):
         return self.item.name.title()
     
 class ItemStatus(models.Model):
+    last_user = models.ForeignKey(User, related_name="item_status", on_delete=models.SET_NULL, null=True, blank=True)
     item = models.ForeignKey(Item, related_name="item_status", on_delete=models.SET_NULL, null=True, blank=True)
     unit_status = models.ForeignKey(UnitStatus, related_name="item_status", on_delete=models.SET_NULL, null=True, blank=True)
     serial = models.CharField(max_length=120, unique=True)

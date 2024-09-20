@@ -171,7 +171,7 @@ class UserViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(archived, many=True)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['GET','POST'])
+    @action(detail=True, methods=['PUT'])
     def is_archived(self, request, pk=None):
         user = self.get_object()
         if not user.is_working:

@@ -58,9 +58,16 @@ class CategoryModelSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class ItemModelSerializer(serializers.ModelSerializer):
+    item_name = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Item
-        fields = ['id', 'create_by', 'barcode', 'name', 'model', 'descriptions', 'category']
+        fields = ['id', 'create_by', 'barcode', 'name', 'item_name', 'model', 'descriptions', 'category']
+
+    def get_item_name(self, obj):
+        if obj.name:
+            return f"{obj.name} | {obj.category.name} - ({obj.model})"
+        return None
 
 class ItemTransactionModelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -157,10 +164,14 @@ class UnitModelSerializer(serializers.ModelSerializer):
 class KitAssignmentModelSerializer(serializers.ModelSerializer):
     unit_kit = serializers.PrimaryKeyRelatedField(queryset=Unitkit.objects.filter(is_available=True), required=False, allow_null=True)
     unit_kit_name = serializers.SerializerMethodField(read_only=True)
+    unit_kit_code = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = KitAssignment
-        fields = ['id', 'unit_kit', 'assign_to', 'date_assigned', 'date_returned', 'unit_kit_name', 'is_returned', 'remarks']
+        fields = ['id', 'unit_kit', 'assign_to', 'date_assigned', 'date_returned', 'unit_kit_name', 'unit_kit_code', 'is_returned', 'remarks']
 
     def get_unit_kit_name(self, obj):
         return obj.unit_kit.name if obj.unit_kit else None
+    
+    def get_unit_kit_code(self, obj):
+        return obj.unit_kit.kit_code if obj.unit_kit else None
